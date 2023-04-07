@@ -65,6 +65,10 @@ public class HelloWorld {
     @Path("/openshiftconfig")
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, String> getOpenshift() {
+        Map<String, String> env = System.getenv();
+        for (String envName : env.keySet()) {
+            System.out.format("%s=%s%n", envName, env.get(envName));
+        }
         Map<String, String> dets = new HashMap<String, String>();
         dets.put("Project name", System.getenv("OPENSHIFT_BUILD_NAMESPACE"));
         dets.put("Build", System.getenv("OPENSHIFT_BUILD_NAME"));
