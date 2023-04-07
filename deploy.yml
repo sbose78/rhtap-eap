@@ -1,0 +1,88 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: helloworld
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: helloworld-wildfly
+    spec:
+      containers:
+        - name: helloworld
+          image: java-useless-image:latest
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: admin
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+            initialDelaySeconds: 10
+          terminationMessagePath: /dev/termination-log
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: admin
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+            initialDelaySeconds: 10
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 9990
+              protocol: TCP
+          env:
+            - name: JGROUPS_PING_PROTOCOL
+              value: dns.DNS_PING
+            - name: OPENSHIFT_DNS_PING_SERVICE_PORT
+              value: '8888'
+            - name: ENABLE_GENERATE_DEFAULT_DATASOURCE
+              value: 'false'
+            - name: OPENSHIFT_DNS_PING_SERVICE_NAME
+              value: helloworld-ping
+            - name: ENV_FILES
+              value: /etc/extensions/*
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: helloworld
+spec:
+ ports:
+  - name: http-8080
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: helloworld-ping
+  annotations:
+    description: The JGroups ping port for clustering.
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+spec:
+  selector:
+    app.kubernetes.io/name: helloworld-wildfly
+  type: ClusterIP
+  clusterIP: None
+  sessionAffinity: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: ping
+      protocol: TCP
+      port: 8888
+      targetPort: 8888

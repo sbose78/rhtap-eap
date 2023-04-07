@@ -1,27 +1,57 @@
 schemaVersion: 2.2.0
 metadata:
-  name: wildfly-test
-  displayName: Wildfly Helloworld
-  description: 'Wildfly test helloworld'
-  language: Java
+  name: java-wildfly
+  version: 1.0.0
   provider: Red Hat
+  supportUrl: https://github.com/devfile-samples/devfile-support#support-information
+  icon: https://design.jboss.org/wildfly/logo/final/wildfly_logomark.svg
+  website: https://wildfly.org
+  displayName: WildFly
+  description: WildFly
+  tags:
+    - Java
+    - WildFly
+  projectType: WildFly
+  language: Java
+  attributes:
+    alpha.dockerimage-port: 8080
+#parent:
+#  id: java-wildfly
+#  registryUrl: 'https://registry.devfile.io'
 components:
   - name: image-build
     image:
-      imageName: ""
+      imageName: java-useless-image:latest
       dockerfile:
-        uri: Dockerfile
-        buildContext: ""
-  - name: kubernetes
-    kubernetes:
-      inlined: placeholder
+        uri: src/main/docker/Dockerfile
+        buildContext: .
+        rootRequired: false
+  - name: kubernetes-deploy
     attributes:
+      deployment/replicas: 2
+      deployment/cpuLimit: '1'
+      deployment/cpuRequest: 10m
+      deployment/memoryLimit: 512Mi
+      deployment/memoryRequest: 50Mi
       deployment/container-port: 8080
-      deployment/cpuRequest: "500m"
-      deployment/memoryRequest: 512Mi
-      deployment/replicas: 1
-      deployment/storageRequest: "0"
+    kubernetes:
+      uri: deploy.yaml
+      endpoints:
+        - name: http-8080
+          targetPort: 8080
+          path: /
 commands:
   - id: build-image
     apply:
       component: image-build
+  - id: deployk8s
+    apply:
+      component: kubernetes-deploy
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deployk8s
+      group:
+        kind: deploy
+        isDefault: true
