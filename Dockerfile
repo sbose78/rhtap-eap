@@ -1,6 +1,6 @@
 ARG IMAGE_VERSION=latest
 
-FROM registry.redhat.io/jboss-eap-7/eap74-openjdk11-openshift-rhel8
+FROM registry.redhat.io/jboss-eap-7/eap74-openjdk11-openshift-rhel8:7.4.10-3
 ARG MAVEN_OPTS
 ENV MAVEN_OPTS=$MAVEN_OPTS
 ARG MAVEN_ARGS_APPEND
